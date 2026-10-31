@@ -1,33 +1,43 @@
-name: Publish SK120 Downloads
+name: Publish SK120 build artifacts
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/publish.yml']
   workflow_dispatch:
+    inputs:
+      firmware_zip_url:
+        description: Signed URL for firmware build ZIP
+        required: true
+        type: string
+      android_zip_url:
+        description: Signed URL for Android build ZIP
+        required: true
+        type: string
+      release_tag:
+        description: New release tag
+        required: true
+        type: string
 permissions:
   contents: write
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Download verified build artifacts
+      - name: Download compiled artifacts
         env:
-          FIRMWARE_ZIP: 'https://sdmntprpolandcentral.oaiusercontent.com/files/00000000-e1d4-820a-a3c7-db52162425ac/raw?se=2026-10-31T22%3A55%3A22Z&sp=r&sv=2026-02-06&sr=b&scid=ae513640-0cce-5b7a-acde-83493b61f207&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-31T06%3A58%3A46Z&ske=2026-11-01T06%3A58%3A46Z&sks=b&skv=2026-02-06&sig=U9GuXlCsFayV/Zp/eh9bexkzdtQ8hTqLMUNR6ZJqUDM%3D'
-          APP_ZIP: 'https://sdmntprpolandcentral.oaiusercontent.com/files/00000000-160c-820a-b2f4-c02e28b9018a/raw?se=2026-10-31T22%3A55%3A23Z&sp=r&sv=2026-02-06&sr=b&scid=7948b2d4-0633-56a1-afa7-2d4be1217d17&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-31T00%3A43%3A21Z&ske=2026-11-01T00%3A43%3A21Z&sks=b&skv=2026-02-06&sig=kQL0ApcygqJ8sERc8a5srPqaMz4wnu/TZcVSHdbrLmI%3D'
+          FIRMWARE_ZIP: ${{ inputs.firmware_zip_url }}
+          APP_ZIP: ${{ inputs.android_zip_url }}
         run: |
           set -euo pipefail
-          curl --fail --location --retry 4 --silent --show-error "$FIRMWARE_ZIP" -o /tmp/firmware.zip
-          curl --fail --location --retry 4 --silent --show-error "$APP_ZIP" -o /tmp/android.zip
+          curl --fail --location --retry 3 --silent --show-error "$FIRMWARE_ZIP" -o /tmp/firmware.zip
+          curl --fail --location --retry 3 --silent --show-error "$APP_ZIP" -o /tmp/android.zip
           mkdir -p dist
           unzip -j /tmp/firmware.zip -d dist
           unzip -j /tmp/android.zip -d dist
           test -s dist/SK120-OTA-C3-factory.bin
           test -s dist/SK120-OTA-C3-firmware.bin
           test -s dist/app-debug.apk
-          mv dist/app-debug.apk dist/SK120-Control-v0.2.apk
-          ls -lh dist
-      - name: Publish public release
+          mv dist/app-debug.apk dist/SK120-Control.apk
+      - name: Create public release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          gh release create v0.2.0 dist/SK120-OTA-C3-factory.bin dist/SK120-OTA-C3-firmware.bin dist/SK120-Control-v0.2.apk --repo "valerio1694-netizen/SK120-Downloads" --title "SK120 Control v0.2" --notes "Erster Hardware-Build (ESP32-C3 plus Android). SK120-Modbus, HUSB238 und MPU6050. Noch nicht an echter Hardware verifiziert; Start-Limits 20 V / 5 A. Factory-BIN für USB ab 0x0, Firmware-BIN für OTA."
+          gh release create "$RELEASE_TAG" dist/*.bin dist/*.apk --repo "valerio1694-netizen/SK120-Downloads" --title "SK120 Control $RELEASE_TAG" --notes "Hardware build, test without load first."
