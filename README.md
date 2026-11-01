@@ -2,11 +2,13 @@
 
 Öffentliche Installationsdateien für SK120 Control Android und ESP32-C3.
 
-## Version 0.2.0
+## Version 0.3.0
 
-- [Android APK](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.2.0/SK120-Control-v0.2.apk)
-- [C3 Factory-BIN für USB](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.2.0/SK120-OTA-C3-factory.bin)
-- [C3 OTA Firmware-BIN](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.2.0/SK120-OTA-C3-firmware.bin)
+- [Android APK](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.3.0/SK120-Control-v0.3.apk)
+- [C3 Factory-BIN für USB](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.3.0/SK120-OTA-C3-factory.bin)
+- [C3 OTA Firmware-BIN](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.3.0/SK120-OTA-C3-firmware.bin)
+
+**Neu in v0.3:** Die C3-Firmware beantwortet Captive-Portal-DNS-Anfragen und leitet Android-/Windows-/Apple-Netzwerktests auf das lokale Portal um. Die Android-App öffnet ihre HTTP-Verbindungen gezielt über das WLAN-Interface mit einer Adresse 10.0.0.x, auch wenn mobile Daten die Standard-Internetroute sind. Das automatische Öffnen des Portals unter HyperOS ist noch nicht nachgewiesen.
 
 ## Einrichtung
 
