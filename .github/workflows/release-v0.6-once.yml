@@ -1,0 +1,33 @@
+name: Publish SK120 LAB v0.6 once
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/release-v0.6-once.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download verified CI build archives
+        env:
+          APP_ARTIFACT_URL: 'https://sdmntprpolandcentral.oaiusercontent.com/files/00000000-2d0c-820a-85cd-b65fe39cf78a/raw?se=2026-11-01T18%3A09%3A57Z&sp=r&sv=2026-02-06&sr=b&scid=dcc5c5ee-d631-5e08-b384-b54c1cf132ab&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-01T06%3A46%3A44Z&ske=2026-11-02T06%3A46%3A44Z&sks=b&skv=2026-02-06&sig=mOMeX0yR0JSjlIT1IlV0opf3umLHPSECuNaMJdtaCCY%3D'
+          ESP_ARTIFACT_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-01c4-81f4-837d-1ca498a06db3/raw?se=2026-11-01T18%3A09%3A57Z&sp=r&sv=2026-02-06&sr=b&scid=25471489-6ed1-5d03-9e4b-fe2aa8946540&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-01T07%3A33%3A46Z&ske=2026-11-02T07%3A33%3A46Z&sks=b&skv=2026-02-06&sig=N5V53%2BYLSVg7FjT%2B1IxsPWQBlMdDJ8O27X%2Br9kXLIGw%3D'
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          curl -fsSL --retry 3 "$APP_ARTIFACT_URL" -o /tmp/sklab-android.zip
+          curl -fsSL --retry 3 "$ESP_ARTIFACT_URL" -o /tmp/sklab-esp.zip
+          unzip -j /tmp/sklab-android.zip -d dist
+          unzip -j /tmp/sklab-esp.zip -d dist
+          test -s dist/app-debug.apk
+          test -s dist/SK120-OTA-C3-firmware.bin
+          test -s dist/SK120-OTA-C3-factory.bin
+          mv dist/app-debug.apk dist/SK120-LAB-v0.6.apk
+          mv dist/SK120-OTA-C3-firmware.bin dist/SK120-LAB-v0.6-OTA.bin
+          mv dist/SK120-OTA-C3-factory.bin dist/SK120-LAB-v0.6-factory.bin
+      - name: Publish public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.6.0 dist/SK120-LAB-v0.6.apk dist/SK120-LAB-v0.6-OTA.bin dist/SK120-LAB-v0.6-factory.bin --repo 'valerio1694-netizen/SK120-Downloads' --latest --title 'SK120 LAB v0.6.0' --notes 'BLE-only firmware and standalone Android app. Includes fixed QR/PIN onboarding OLED, six selectable OLED modes and dimming, MPU6050 3D tilt/water-level/G-meter/shock log, integrated offline help, BLE OTA and Android USB ROM flashing. Both Android and ESP32-C3 CI builds succeeded. IMPORTANT: BLE-OTA, USB flashing, SK120 Modbus and new on-device OLED behavior are NOT YET HARDWARE-VERIFIED; keep v0.4 recovery files. OTA-BIN is for OTA; Factory-BIN is only for USB/esptool full flashing.'
