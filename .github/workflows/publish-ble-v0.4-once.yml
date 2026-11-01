@@ -1,0 +1,32 @@
+name: Publish BLE v0.4 release once
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-ble-v0.4-once.yml
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the successful BLE build artifacts
+        env:
+          APP_ARTIFACT: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-9e8c-8210-bd55-9682d545e663/raw?se=2026-11-01T15%3A31%3A38Z&sp=r&sv=2026-02-06&sr=b&scid=8c6bf582-dd02-5637-89fb-31efa5771913&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-01T00%3A59%3A36Z&ske=2026-11-02T00%3A59%3A36Z&sks=b&skv=2026-02-06&sig=qxQy21IGMFEDyh0SKUlbkur/J2l4Uv6oDq6HreWjNBY%3D'
+          C3_ARTIFACT: 'https://sdmntpreastus2.oaiusercontent.com/files/00000000-5494-81f6-a08b-5c1fb175f423/raw?se=2026-11-01T15%3A31%3A38Z&sp=r&sv=2026-02-06&sr=b&scid=65ff4c41-bff8-55fd-97be-8d9d5b5a77bb&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-01T07%3A33%3A56Z&ske=2026-11-02T07%3A33%3A56Z&sks=b&skv=2026-02-06&sig=0BDibs3alHaMVxASNqzuyB%2Bl83/JFPEuJXHYydN/76I%3D'
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          curl --fail --location --retry 4 --silent --show-error "$APP_ARTIFACT" -o /tmp/app.zip
+          curl --fail --location --retry 4 --silent --show-error "$C3_ARTIFACT" -o /tmp/c3.zip
+          unzip -j /tmp/app.zip -d dist
+          unzip -j /tmp/c3.zip -d dist
+          test -s dist/app-debug.apk
+          test -s dist/SK120-OTA-C3-firmware.bin
+          test -s dist/SK120-OTA-C3-factory.bin
+          mv dist/app-debug.apk dist/SK120-BLE-Test-v0.4.apk
+      - name: Publish GitHub release visible to ESP QR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.4.0 dist/SK120-BLE-Test-v0.4.apk dist/SK120-OTA-C3-firmware.bin dist/SK120-OTA-C3-factory.bin --repo 'valerio1694-netizen/SK120-Downloads' --latest --title 'SK120 BLE Test v0.4.0' --notes 'BLE device scan, Android pairing using six-digit OLED passkey, encrypted GATT and BLE telemetry. Wi-Fi AP and OTA remain available. Compiled successfully; BLE coupling and phone data exchange tested. SK120 Modbus/control with real hardware and pairing with second devices are not yet validated. Do not run unattended loads.'
