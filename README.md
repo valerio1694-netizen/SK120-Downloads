@@ -2,6 +2,16 @@
 
 Öffentliche Installationsdateien für SK120 Control Android und ESP32-C3.
 
+## Version 0.6.0 – SK120 LAB (neue Funktionen noch hardwareseitig zu prüfen)
+
+- [Android-App v0.6](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.6.0/SK120-LAB-v0.6.apk)
+- [ESP32-C3 OTA-Firmware v0.6](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.6.0/SK120-LAB-v0.6-OTA.bin)
+- [ESP32-C3 Factory-BIN v0.6, nur für USB/esptool](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.6.0/SK120-LAB-v0.6-factory.bin)
+
+Neu: BLE-only, OLED-QR+PIN ohne Verbindung, sechs OLED-Modi mit Schonmodus, MPU6050 mit 3D-Lage/Wasserwaage/G-Meter/Stoßmonitor, Offline-Hilfe sowie BLE-OTA/Android-USB-Flasher.
+
+**Wichtig:** App und Firmware kompilieren. Die neuen Updateverfahren, das komplette OLED-Verhalten und die Modbus-Hardwarekommunikation sind noch nicht am realen SK120 validiert. Die bisher funktionierende v0.4 bleibt für die Wiederherstellung verfügbar.
+
 ## Version 0.4.0 – BLE Test
 
 - [Android BLE-Test APK](https://github.com/valerio1694-netizen/SK120-Downloads/releases/download/v0.4.0/SK120-BLE-Test-v0.4.apk)
