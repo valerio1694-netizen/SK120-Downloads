@@ -1,0 +1,33 @@
+name: Publish SK120 v0.3.0 once
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-v0.3-once.yml
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve verified GitHub Actions files
+        env:
+          FIRMWARE_URL: 'https://sdmntprpolandcentral.oaiusercontent.com/files/00000000-5f48-820a-9da2-03be6e30a1e4/raw?se=2026-11-01T03%3A29%3A27Z&sp=r&sv=2026-02-06&sr=b&scid=feb85d6a-7f0d-5553-b217-a4f9620b9895&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-31T06%3A20%3A58Z&ske=2026-11-01T06%3A20%3A58Z&sks=b&skv=2026-02-06&sig=BbPRDotOM9UPUKXAQliXlbU/jLeX5FJfOuFplYTlxY8%3D'
+          ANDROID_URL: 'https://sdmntprpolandcentral.oaiusercontent.com/files/00000000-01f0-820a-9fd6-c9782a36ca61/raw?se=2026-11-01T03%3A29%3A27Z&sp=r&sv=2026-02-06&sr=b&scid=d597c821-ca13-5fe9-b977-734db6ee1aa9&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-01T00%3A45%3A48Z&ske=2026-11-02T00%3A45%3A48Z&sks=b&skv=2026-02-06&sig=VKpywKGJ/Q1fvsAoocxshwfTgoiv9uhbmDWQzufSE3o%3D'
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --silent --show-error "$FIRMWARE_URL" -o /tmp/firmware.zip
+          curl -fL --retry 3 --silent --show-error "$ANDROID_URL" -o /tmp/app.zip
+          mkdir -p dist
+          unzip -j /tmp/firmware.zip -d dist
+          unzip -j /tmp/app.zip -d dist
+          test -s dist/SK120-OTA-C3-firmware.bin
+          test -s dist/SK120-OTA-C3-factory.bin
+          test -s dist/app-debug.apk
+          mv dist/app-debug.apk dist/SK120-Control-v0.3.apk
+          ls -lh dist
+      - name: Publish public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.3.0 dist/SK120-OTA-C3-factory.bin dist/SK120-OTA-C3-firmware.bin dist/SK120-Control-v0.3.apk --repo 'valerio1694-netizen/SK120-Downloads' --title 'SK120 Control v0.3.0' --notes 'ESP32-C3 Captive Portal und Android-WLAN-Netzwerkauswahl. Bestehender Access Point mit 10.0.0.1 und WLAN-Passwort bleibt bei normalem OTA erhalten. Build erfolgreich; Praxistest auf dem Smartphone und am SK120 noch offen.'
