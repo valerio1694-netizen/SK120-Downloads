@@ -1,0 +1,33 @@
+name: Publish SK120 LAB v0.8.5 once
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-v0.8.5-once.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify validated app and ESP artifacts
+        env:
+          APP_URL: 'https://sdmntprpolandcentral.oaiusercontent.com/files/00000000-2934-820a-8064-1d0070d5e70b/raw?se=2026-11-02T22%3A18%3A32Z&sp=r&sv=2026-02-06&sr=b&scid=471a6a20-b7e7-5c86-b22e-31d7b9f6715b&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-02T04%3A00%3A43Z&ske=2026-11-03T04%3A00%3A43Z&sks=b&skv=2026-02-06&sig=8YU0HMCxt5dFw/SEP8ojlP3YzDAn%2BDtgmlfQMDCSevs%3D'
+          ESP_URL: 'https://sdmntprpolandcentral.oaiusercontent.com/files/00000000-9730-820a-ac1c-afa2de351747/raw?se=2026-11-02T22%3A18%3A31Z&sp=r&sv=2026-02-06&sr=b&scid=d833cdd3-1737-59d0-b728-83b1a5fdb997&skoid=b5d2651b-fef3-4bb0-a03b-ca59cc22929b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-02T06%3A43%3A46Z&ske=2026-11-03T06%3A43%3A46Z&sks=b&skv=2026-02-06&sig=1jkP4Zn0MYeqzCMsNG7%2Bs9%2B6RjrYoGK32BqUMZ5NKh4%3D'
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          curl -fsSL --retry 3 "$APP_URL" -o /tmp/app.zip
+          curl -fsSL --retry 3 "$ESP_URL" -o /tmp/esp.zip
+          unzip -jp /tmp/app.zip app-debug.apk > output/SK120-LAB-v0.8.5.apk
+          unzip -jp /tmp/esp.zip SK120-OTA-C3-firmware.bin > output/SK120-LAB-v0.8.5-OTA.bin
+          test "$(stat -c%s output/SK120-LAB-v0.8.5.apk)" -eq 9736498
+          test "$(stat -c%s output/SK120-LAB-v0.8.5-OTA.bin)" -eq 623216
+          echo '9e8cae80a52af1e31283ff0ff7f22deedfa42aacfd7f53bcbf3181fae6b46cf6  output/SK120-LAB-v0.8.5.apk' | sha256sum -c
+          echo '92cc443cdf9665003796a23e219a2d274baaa960bbeb1ece7d57565ef918372a  output/SK120-LAB-v0.8.5-OTA.bin' | sha256sum -c
+          cp output/SK120-LAB-v0.8.5-OTA.bin output/SK120-OTA-C3-firmware.bin
+          sha256sum output/* > output/SHA256SUMS.txt
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.8.5 output/* --repo 'valerio1694-netizen/SK120-Downloads' --latest --title 'SK120 LAB v0.8.5' --notes 'Modbus: SK120 internal temperature register 0x000D on dashboard, system page, and SSD1306 system view. Brightness 0x0014 (1..5), buzzer 0x001C (0/1), MPPT 0x001F (0/1) with guarded writes only when output OFF and register was first readable; verify readback. Dedicated read-only FC03 scanner, 1..32 registers/scan, output OFF. Registers and behavior depend on SK120 hardware/firmware. Android and ESP32-C3 builds passed, not yet tested on device. Install app first, then use application OTA BIN over BLE with output OFF; never use a factory image for OTA.'
