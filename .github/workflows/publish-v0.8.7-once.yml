@@ -1,0 +1,33 @@
+name: Publish SK120 LAB v0.8.7 once
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-v0.8.7-once.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify finished Android and C3 images
+        env:
+          APK_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-4ca8-81f4-ae3e-9e8a63234948/raw?se=2026-11-03T05%3A39%3A15Z&sp=r&sv=2026-02-06&sr=b&scid=3293923a-88d8-5302-808c-e919e6568217&skoid=56822d8b-6cfd-42ed-a00d-1452dca42036&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-03T04%3A52%3A43Z&ske=2026-11-04T04%3A52%3A43Z&sks=b&skv=2026-02-06&sig=3tAoOsw0f%2BQ6/32qQcNLRwYoJXkKhS9ilF8V2FbZqJk%3D'
+          C3_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-c76c-81f4-913c-197c66896759/raw?se=2026-11-03T05%3A39%3A14Z&sp=r&sv=2026-02-06&sr=b&scid=1bd2b048-9e37-53b6-a279-2c40f6cb9bea&skoid=56822d8b-6cfd-42ed-a00d-1452dca42036&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-03T00%3A24%3A14Z&ske=2026-11-04T00%3A24%3A14Z&sks=b&skv=2026-02-06&sig=TIKZRiIQBKUNmhfvqpMK9aGN68/qHA9NrTxLN01e4T0%3D'
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          curl -fsSL --retry 3 "$APK_URL" -o /tmp/sk-app.zip
+          curl -fsSL --retry 3 "$C3_URL" -o /tmp/sk-c3.zip
+          unzip -jp /tmp/sk-app.zip app-debug.apk > dist/SK120-LAB-v0.8.7.apk
+          unzip -jp /tmp/sk-c3.zip SK120-OTA-C3-firmware.bin > dist/SK120-LAB-v0.8.7-OTA.bin
+          test "$(stat -c%s dist/SK120-LAB-v0.8.7.apk)" -eq 9769266
+          test "$(stat -c%s dist/SK120-LAB-v0.8.7-OTA.bin)" -eq 623776
+          echo 'ae0362d100519236f152b18cea6f07b1b9cbd2e106eb952be9739c68d422cc7a  dist/SK120-LAB-v0.8.7.apk' | sha256sum -c
+          echo '472577ac33226799bfab811efcedd711ec48ef9e1c127f79b34b89096d6a22d9  dist/SK120-LAB-v0.8.7-OTA.bin' | sha256sum -c
+          cp dist/SK120-LAB-v0.8.7-OTA.bin dist/SK120-OTA-C3-firmware.bin
+          sha256sum dist/* > dist/SHA256SUMS.txt
+      - name: Publish checked release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.8.7 dist/* --repo 'valerio1694-netizen/SK120-Downloads' --latest --title 'SK120 LAB v0.8.7 Modbus Register Editor' --notes 'New: documented register catalog with controlled device-fingerprint-gated writes (FC06), conservative value ranges, output-off guard, pre-read and verified readback. Additional Modbus scanner compare workflow: save baseline, rescan and highlight differences for undocumented-register investigation. Temperature and 3D axis orientation fixes from 0.8.6 retained. Sensitive identity, baud rate, calibration, auto-on and unsupported registers remain read-only. App + ESP32-C3 compiled successfully; physical writes NOT tested. Install APK and BLE-OTA application BIN with output OFF. Do not flash the factory image by BLE.'
